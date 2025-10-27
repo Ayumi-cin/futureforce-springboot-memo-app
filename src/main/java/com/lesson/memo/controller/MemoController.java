@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.lesson.memo.model.Memo;
+import com.lesson.memo.model.Priority;
 import com.lesson.memo.repository.MemoRepository;
 
 @Controller
@@ -30,14 +31,28 @@ public class MemoController {
 
     @GetMapping
     public String list(Model model) {
-        List<Memo> memos = memoRepository.findAll();
+    		List<Memo> memos = memoRepository.findAll();
+    		memos.sort((a, b) -> {
+    	        int orderA = getPriorityOrder(a.getPriority());
+    	        int orderB = getPriorityOrder(b.getPriority());
+    	        return Integer.compare(orderA, orderB);
+    	    });
+    	
         model.addAttribute("memos", memos);
         return "memo-list";
+    }
+    
+    private int getPriorityOrder(Priority p) {
+        if (p == Priority.HIGH) return 1;
+        if (p == Priority.MEDIUM) return 2;
+        if (p == Priority.LOW) return 3;
+        return 4;
     }
 
     @GetMapping("/new")
     public String showForm(Model model) {
         model.addAttribute("memo", new Memo());
+        model.addAttribute("priorities", Priority.values());
         return "memo-form";
     }
 
