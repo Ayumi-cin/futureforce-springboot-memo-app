@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,10 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.lesson.memo.model.Memo;
+import com.lesson.memo.model.Priority;
 import com.lesson.memo.repository.MemoRepository;
-
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
 
 @Controller
 @RequestMapping("/memo")
@@ -30,14 +31,28 @@ public class MemoController {
 
     @GetMapping
     public String list(Model model) {
-        List<Memo> memos = memoRepository.findAll();
+    		List<Memo> memos = memoRepository.findAll();
+    		memos.sort((a, b) -> {
+    	        int orderA = getPriorityOrder(a.getPriority());
+    	        int orderB = getPriorityOrder(b.getPriority());
+    	        return Integer.compare(orderA, orderB);
+    	    });
+    	
         model.addAttribute("memos", memos);
         return "memo-list";
+    }
+    
+    private int getPriorityOrder(Priority p) {
+        if (p == Priority.HIGH) return 1;
+        if (p == Priority.MEDIUM) return 2;
+        if (p == Priority.LOW) return 3;
+        return 4;
     }
 
     @GetMapping("/new")
     public String showForm(Model model) {
         model.addAttribute("memo", new Memo());
+        model.addAttribute("priorities", Priority.values());
         return "memo-form";
     }
 
@@ -107,6 +122,7 @@ public class MemoController {
 
         memoToUpdate.setTitle(memo.getTitle());
         memoToUpdate.setContent(memo.getContent());
+        memoToUpdate.setPriority(memo.getPriority());
         memoToUpdate.setUpdatedAt(LocalDateTime.now());
         memoRepository.save(memoToUpdate);
 
